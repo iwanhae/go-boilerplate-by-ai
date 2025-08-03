@@ -63,28 +63,7 @@ func (h *Handlers) SetLogLevel(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// GetPprofProfile handles GET /debug/pprof/{profile}
-func (h *Handlers) GetPprofProfile(w http.ResponseWriter, r *http.Request) {
-	// Extract profile from URL path
-	profile := r.URL.Path[len("/debug/pprof/"):]
-	if profile == "" {
-		h.errorHandler.HandleError(w, r, &domain.ValidationError{
-			Field:   "profile",
-			Message: "profile parameter is required",
-		})
-		return
-	}
 
-	data, err := h.debugService.GetPprofProfile(r.Context(), profile)
-	if err != nil {
-		h.errorHandler.HandleError(w, r, err)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/octet-stream")
-	w.WriteHeader(http.StatusOK)
-	w.Write(data)
-}
 
 // ListPosts handles GET /posts
 func (h *Handlers) ListPosts(w http.ResponseWriter, r *http.Request) {

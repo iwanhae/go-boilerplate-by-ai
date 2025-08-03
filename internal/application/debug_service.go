@@ -10,15 +10,17 @@ import (
 
 // DebugService handles debug-related operations
 type DebugService struct {
-	logger infrastructure.LoggerInterface
-	store  domain.Store
+	logger  infrastructure.LoggerInterface
+	store   domain.Store
+	metrics *infrastructure.MetricsCollector
 }
 
 // NewDebugService creates a new debug service
-func NewDebugService(logger infrastructure.LoggerInterface, store domain.Store) *DebugService {
+func NewDebugService(logger infrastructure.LoggerInterface, store domain.Store, metrics *infrastructure.MetricsCollector) *DebugService {
 	return &DebugService{
-		logger: logger,
-		store:  store,
+		logger:  logger,
+		store:   store,
+		metrics: metrics,
 	}
 }
 
@@ -34,6 +36,9 @@ func (s *DebugService) SetLogLevel(ctx context.Context, level string) error {
 		return &domain.StorageError{Err: err}
 	}
 
+	// Update metrics
+	s.metrics.SetLogLevel(level)
+
 	// Log the level change
 	s.logger.LogLevelChange(s.logger.GetLevel().String(), level)
 
@@ -47,33 +52,7 @@ func (s *DebugService) GetLogLevel(ctx context.Context) string {
 
 // GetMetrics returns application metrics
 func (s *DebugService) GetMetrics(ctx context.Context) (string, error) {
-	// In a real implementation, this would return Prometheus metrics
-	// For now, we'll return a simple metrics format
-	metrics := fmt.Sprintf(`# HELP app_requests_total Total number of requests
-# TYPE app_requests_total counter
-app_requests_total{method="GET",path="/posts"} 0
-app_requests_total{method="POST",path="/posts"} 0
-app_requests_total{method="GET",path="/posts/{id}"} 0
-app_requests_total{method="PUT",path="/posts/{id}"} 0
-app_requests_total{method="DELETE",path="/posts/{id}"} 0
-
-# HELP app_storage_operations_total Total number of storage operations
-# TYPE app_storage_operations_total counter
-app_storage_operations_total{operation="get"} 0
-app_storage_operations_total{operation="set"} 0
-app_storage_operations_total{operation="delete"} 0
-app_storage_operations_total{operation="list"} 0
-
-# HELP app_storage_items_current Current number of items in storage
-# TYPE app_storage_items_current gauge
-app_storage_items_current 0
-
-# HELP app_log_level_current Current log level
-# TYPE app_log_level_current gauge
-app_log_level_current{level="%s"} 1
-`, s.logger.GetLevel().String())
-
-	return metrics, nil
+	return s.metrics.GetMetrics(ctx)
 }
 
 // GetPprofProfile returns pprof profile data

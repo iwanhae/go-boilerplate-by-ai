@@ -7,17 +7,20 @@ import (
 	"time"
 
 	"gosuda.org/boilerplate/internal/domain"
+	"gosuda.org/boilerplate/internal/infrastructure"
 )
 
 // PostService handles business logic for posts
 type PostService struct {
-	store domain.Store
+	store   domain.Store
+	metrics *infrastructure.MetricsCollector
 }
 
 // NewPostService creates a new post service
-func NewPostService(store domain.Store) *PostService {
+func NewPostService(store domain.Store, metrics *infrastructure.MetricsCollector) *PostService {
 	return &PostService{
-		store: store,
+		store:   store,
+		metrics: metrics,
 	}
 }
 
@@ -39,6 +42,9 @@ func (s *PostService) CreatePost(ctx context.Context, req *domain.CreatePostRequ
 	if err := s.store.Set(key, post); err != nil {
 		return nil, &domain.StorageError{Err: err}
 	}
+
+	// Update metrics
+	s.updatePostMetrics()
 
 	return post, nil
 }
@@ -106,6 +112,9 @@ func (s *PostService) DeletePost(ctx context.Context, id string) error {
 		}
 		return &domain.StorageError{Err: err}
 	}
+
+	// Update metrics
+	s.updatePostMetrics()
 
 	return nil
 }
@@ -221,4 +230,25 @@ func postKey(id string) string {
 func generatePostID() string {
 	// Simple ID generation - in a real app, you might use UUID or a more sophisticated approach
 	return fmt.Sprintf("post-%d", time.Now().UnixNano())
+}
+
+// updatePostMetrics updates the post count metrics
+func (s *PostService) updatePostMetrics() {
+	// Get all posts to count them
+	values, err := s.store.List("posts:")
+	if err != nil {
+		// If we can't get the count, just return
+		return
+	}
+
+	// Count posts
+	postCount := 0
+	for _, value := range values {
+		if _, ok := value.(domain.Post); ok {
+			postCount++
+		}
+	}
+
+	// Update metrics
+	s.metrics.SetPostsCount(postCount)
 }
