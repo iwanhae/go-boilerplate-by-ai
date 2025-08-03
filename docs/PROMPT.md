@@ -79,6 +79,10 @@ The boilerplate development proceeds in the following order:
 4. Execute the tasks in `CHECKLIST.md`:
    1. Select a task in `CHECKLIST.md` and mark it as **WIP**.
    2. Update the code.
-   3. Run `go test` and `go build` to verify all tests pass, test coverage meets the threshold, and the build succeeds.
-   4. Mark the task in `CHECKLIST.md` as **Done**.
+   3. IMPORTANT: Run `go test` and `go build` to verify all tests pass, test coverage meets the threshold, and the build succeeds.
+   4. After all tests pass, build succeeds, and test coverage meets the threshold, mark the task in `CHECKLIST.md` as **Done**.
 5. Once all tasks in `CHECKLIST.md` are completed, write `README.md` to finalize the project.
+
+# FYI.
+
+You will receive workspace directory initialized with `go mod init gosuda.org/boilerplate`.
