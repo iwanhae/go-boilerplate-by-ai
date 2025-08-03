@@ -110,16 +110,16 @@ This checklist contains all tasks needed to implement the web API server boilerp
 ## Phase 4: Debug Features 🔄 PENDING
 
 ### 4.1 Metrics Collection 🔄
-- [ ] Implement `internal/infrastructure/metrics.go`
-- [ ] Add Prometheus metrics collection
-- [ ] Define HTTP request metrics
-- [ ] Add storage operation metrics
-- [ ] Add custom business metrics
-- [ ] Write metrics tests
+- [x] **Done** Implement `internal/infrastructure/metrics.go`
+- [x] **Done** Add Prometheus metrics collection
+- [x] **Done** Define HTTP request metrics
+- [x] **Done** Add storage operation metrics
+- [x] **Done** Add custom business metrics
+- [x] **Done** Write metrics tests
 
 ### 4.2 Pprof Endpoints 🔄
-- [ ] Add pprof import to main.go
-- [ ] Configure pprof routes
+- [x] **Done** Add pprof import to main.go
+- [x] **Done** Configure pprof routes
 - [ ] Add security considerations
 - [ ] Test pprof endpoints
 

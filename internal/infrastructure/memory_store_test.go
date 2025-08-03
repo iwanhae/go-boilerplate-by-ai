@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewMemoryStore(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 	if store == nil {
 		t.Fatal("Expected store but got nil")
 	}
@@ -23,7 +23,7 @@ func TestNewMemoryStore(t *testing.T) {
 }
 
 func TestMemoryStore_Set(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Test setting a simple value
 	err := store.Set("key1", "value1")
@@ -55,7 +55,7 @@ func TestMemoryStore_Set(t *testing.T) {
 }
 
 func TestMemoryStore_Get(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Test getting non-existent key
 	_, err := store.Get("nonexistent")
@@ -103,7 +103,7 @@ func TestMemoryStore_Get(t *testing.T) {
 }
 
 func TestMemoryStore_GetTyped(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Test getting typed value
 	originalValue := map[string]interface{}{
@@ -136,7 +136,7 @@ func TestMemoryStore_GetTyped(t *testing.T) {
 }
 
 func TestMemoryStore_List(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Set up test data
 	store.Set("user:1", "user1")
@@ -185,7 +185,7 @@ func TestMemoryStore_List(t *testing.T) {
 }
 
 func TestMemoryStore_ListKeys(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Set up test data
 	store.Set("user:1", "user1")
@@ -212,7 +212,7 @@ func TestMemoryStore_ListKeys(t *testing.T) {
 }
 
 func TestMemoryStore_Delete(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Test deleting non-existent key
 	err := store.Delete("nonexistent")
@@ -243,7 +243,7 @@ func TestMemoryStore_Delete(t *testing.T) {
 }
 
 func TestMemoryStore_Close(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Add some data
 	store.Set("key1", "value1")
@@ -266,7 +266,7 @@ func TestMemoryStore_Close(t *testing.T) {
 }
 
 func TestMemoryStore_Size(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	if store.Size() != 0 {
 		t.Errorf("Expected size 0, got %d", store.Size())
@@ -289,7 +289,7 @@ func TestMemoryStore_Size(t *testing.T) {
 }
 
 func TestMemoryStore_Exists(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Test non-existent key
 	if store.Exists("nonexistent") {
@@ -315,7 +315,7 @@ func TestMemoryStore_Exists(t *testing.T) {
 }
 
 func TestMemoryStore_Clear(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Add some data
 	store.Set("key1", "value1")
@@ -338,7 +338,7 @@ func TestMemoryStore_Clear(t *testing.T) {
 }
 
 func TestMemoryStore_Concurrency(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 	done := make(chan bool, 10)
 
 	// Start multiple goroutines writing
@@ -376,7 +376,7 @@ func TestMemoryStore_Concurrency(t *testing.T) {
 }
 
 func TestMemoryStore_JSONSerialization(t *testing.T) {
-	store := NewMemoryStore()
+	store := NewMemoryStore(nil)
 
 	// Test storing various data types
 	testCases := []struct {
