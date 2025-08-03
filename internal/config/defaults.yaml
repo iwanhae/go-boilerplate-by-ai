@@ -1,0 +1,29 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  readTimeout: "30s"
+  writeTimeout: "30s"
+  idleTimeout: "60s"
+
+logging:
+  level: "info"
+  format: "json"  # "text" for development, "json" for production
+  output: "stdout"
+
+storage:
+  type: "memory"
+  # Future: database connection details
+
+debug:
+  metrics:
+    enabled: true
+    path: "/debug/metrics"
+  pprof:
+    enabled: true
+    path: "/debug/pprof"
+
+cors:
+  allowedOrigins: ["*"]
+  allowedMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  allowedHeaders: ["Content-Type", "Authorization", "X-Request-ID"]
+  maxAge: 86400
