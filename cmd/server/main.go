@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 
+	_ "net/http/pprof"
+
 	"gosuda.org/boilerplate/api"
 	"gosuda.org/boilerplate/internal/application"
 	"gosuda.org/boilerplate/internal/config"
@@ -34,12 +36,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Initialize storage
-	store := infrastructure.NewMemoryStore()
+	// Initialize metrics and storage
+	metrics := infrastructure.NewMetrics()
+	store := infrastructure.NewMemoryStore(metrics)
 
 	// Initialize services
 	postService := application.NewPostService(store)
-	debugService := application.NewDebugService(logger, store)
+	debugService := application.NewDebugService(logger, store, metrics)
 
 	// Initialize middleware
 	requestIDMiddleware := middleware.NewRequestIDMiddleware()
@@ -59,6 +62,12 @@ func main() {
 	r.Use(requestIDMiddleware.Handler)
 	r.Use(loggingMiddleware.Handler)
 	r.Use(corsMiddleware.Handler)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			metrics.IncRequest(r.Method, r.URL.Path)
+			next.ServeHTTP(w, r)
+		})
+	})
 
 	// Add Chi middleware
 	r.Use(chimiddleware.RealIP)
@@ -67,11 +76,15 @@ func main() {
 	r.Use(chimiddleware.Recoverer)
 
 	// API routes
-	r.Route("/debug", func(r chi.Router) {
-		r.Get("/metrics", handlers.GetMetrics)
-		r.Post("/logs", handlers.SetLogLevel)
-		r.Get("/pprof/*", handlers.GetPprofProfile)
-	})
+	if cfg.Debug.Metrics.Enabled {
+		r.Get(cfg.Debug.Metrics.Path, handlers.GetMetrics)
+	}
+	r.Post("/debug/logs", handlers.SetLogLevel)
+
+	// Mount pprof routes
+	if cfg.Debug.Pprof.Enabled {
+		r.Mount(cfg.Debug.Pprof.Path, chimiddleware.Profiler())
+	}
 
 	r.Route("/posts", func(r chi.Router) {
 		r.Get("/", handlers.ListPosts)

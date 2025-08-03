@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 
 	"gosuda.org/boilerplate/internal/domain"
 	"gosuda.org/boilerplate/internal/infrastructure"
@@ -10,15 +9,17 @@ import (
 
 // DebugService handles debug-related operations
 type DebugService struct {
-	logger infrastructure.LoggerInterface
-	store  domain.Store
+	logger  infrastructure.LoggerInterface
+	store   domain.Store
+	metrics *infrastructure.Metrics
 }
 
 // NewDebugService creates a new debug service
-func NewDebugService(logger infrastructure.LoggerInterface, store domain.Store) *DebugService {
+func NewDebugService(logger infrastructure.LoggerInterface, store domain.Store, metrics *infrastructure.Metrics) *DebugService {
 	return &DebugService{
-		logger: logger,
-		store:  store,
+		logger:  logger,
+		store:   store,
+		metrics: metrics,
 	}
 }
 
@@ -47,46 +48,7 @@ func (s *DebugService) GetLogLevel(ctx context.Context) string {
 
 // GetMetrics returns application metrics
 func (s *DebugService) GetMetrics(ctx context.Context) (string, error) {
-	// In a real implementation, this would return Prometheus metrics
-	// For now, we'll return a simple metrics format
-	metrics := fmt.Sprintf(`# HELP app_requests_total Total number of requests
-# TYPE app_requests_total counter
-app_requests_total{method="GET",path="/posts"} 0
-app_requests_total{method="POST",path="/posts"} 0
-app_requests_total{method="GET",path="/posts/{id}"} 0
-app_requests_total{method="PUT",path="/posts/{id}"} 0
-app_requests_total{method="DELETE",path="/posts/{id}"} 0
-
-# HELP app_storage_operations_total Total number of storage operations
-# TYPE app_storage_operations_total counter
-app_storage_operations_total{operation="get"} 0
-app_storage_operations_total{operation="set"} 0
-app_storage_operations_total{operation="delete"} 0
-app_storage_operations_total{operation="list"} 0
-
-# HELP app_storage_items_current Current number of items in storage
-# TYPE app_storage_items_current gauge
-app_storage_items_current 0
-
-# HELP app_log_level_current Current log level
-# TYPE app_log_level_current gauge
-app_log_level_current{level="%s"} 1
-`, s.logger.GetLevel().String())
-
-	return metrics, nil
-}
-
-// GetPprofProfile returns pprof profile data
-func (s *DebugService) GetPprofProfile(ctx context.Context, profile string) ([]byte, error) {
-	// Validate profile type
-	if err := validatePprofProfile(profile); err != nil {
-		return nil, err
-	}
-
-	// In a real implementation, this would return actual pprof data
-	// For now, we'll return a placeholder
-	placeholder := fmt.Sprintf("pprof profile data for %s (placeholder)", profile)
-	return []byte(placeholder), nil
+	return s.metrics.Gather()
 }
 
 // GetHealthStatus returns the application health status
@@ -154,47 +116,23 @@ func validateLogLevel(level string) error {
 	return nil
 }
 
-// validatePprofProfile validates a pprof profile type
-func validatePprofProfile(profile string) error {
-	validProfiles := map[string]bool{
-		"allocs":       true,
-		"block":        true,
-		"cmdline":      true,
-		"goroutine":    true,
-		"heap":         true,
-		"mutex":        true,
-		"profile":      true,
-		"threadcreate": true,
-		"trace":        true,
-	}
-
-	if !validProfiles[profile] {
-		return &domain.ValidationError{
-			Field:   "profile",
-			Message: "invalid pprof profile type",
-		}
-	}
-
-	return nil
-}
-
 // checkStorageHealth checks if the storage is healthy
 func (s *DebugService) checkStorageHealth(ctx context.Context) error {
 	// Try to perform a simple operation to check storage health
 	testKey := "health:test"
 	testValue := "test"
-	
+
 	if err := s.store.Set(testKey, testValue); err != nil {
 		return err
 	}
-	
+
 	if _, err := s.store.Get(testKey); err != nil {
 		return err
 	}
-	
+
 	if err := s.store.Delete(testKey); err != nil {
 		return err
 	}
-	
+
 	return nil
 }

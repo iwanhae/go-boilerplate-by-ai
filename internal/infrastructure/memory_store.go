@@ -3,22 +3,24 @@ package infrastructure
 import (
 	"encoding/json"
 	"fmt"
-	"sync"
 	"strings"
+	"sync"
 
 	"gosuda.org/boilerplate/internal/domain"
 )
 
 // MemoryStore implements the Store interface using an in-memory map
 type MemoryStore struct {
-	data map[string][]byte
-	mu   sync.RWMutex
+	data    map[string][]byte
+	mu      sync.RWMutex
+	metrics *Metrics
 }
 
 // NewMemoryStore creates a new in-memory store instance
-func NewMemoryStore() *MemoryStore {
+func NewMemoryStore(metrics *Metrics) *MemoryStore {
 	return &MemoryStore{
-		data: make(map[string][]byte),
+		data:    make(map[string][]byte),
+		metrics: metrics,
 	}
 }
 
@@ -38,6 +40,10 @@ func (s *MemoryStore) Set(key string, value any) error {
 	}
 
 	s.data[key] = data
+	if s.metrics != nil {
+		s.metrics.IncStorageOp("set")
+		s.metrics.SetStorageItems(len(s.data))
+	}
 	return nil
 }
 
@@ -61,6 +67,9 @@ func (s *MemoryStore) Get(key string) (value any, err error) {
 		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
 	}
 
+	if s.metrics != nil {
+		s.metrics.IncStorageOp("get")
+	}
 	return result, nil
 }
 
@@ -101,6 +110,9 @@ func (s *MemoryStore) List(keyPrefix string) (values []any, err error) {
 		}
 	}
 
+	if s.metrics != nil {
+		s.metrics.IncStorageOp("list")
+	}
 	return result, nil
 }
 
@@ -133,6 +145,10 @@ func (s *MemoryStore) Delete(key string) error {
 	}
 
 	delete(s.data, key)
+	if s.metrics != nil {
+		s.metrics.IncStorageOp("delete")
+		s.metrics.SetStorageItems(len(s.data))
+	}
 	return nil
 }
 
