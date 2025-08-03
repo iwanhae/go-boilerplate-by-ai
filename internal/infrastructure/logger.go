@@ -10,11 +10,34 @@ import (
 	"gosuda.org/boilerplate/internal/config"
 )
 
+// LoggerInterface defines the interface for logging functionality
+type LoggerInterface interface {
+	SetLevel(level string) error
+	GetLevel() slog.Level
+	Debug(msg string, args ...any)
+	Info(msg string, args ...any)
+	Warn(msg string, args ...any)
+	Error(msg string, args ...any)
+	WithContext(ctx context.Context) *slog.Logger
+	WithRequestID(requestID string) *slog.Logger
+	WithFields(fields map[string]any) *slog.Logger
+	LogHTTPRequest(ctx context.Context, method, path, remoteAddr, userAgent string, statusCode int, durationMs int64)
+	LogHTTPError(ctx context.Context, method, path string, statusCode int, err error)
+	LogStorageOperation(ctx context.Context, operation, key string, err error)
+	LogStartup(version, commitHash string, config *config.Config)
+	LogShutdown(reason string)
+	LogGracefulShutdown(phase string, remainingRequests int)
+	LogLevelChange(oldLevel, newLevel string)
+}
+
 // Logger provides structured logging functionality
 type Logger struct {
 	logger *slog.Logger
 	level  atomic.Value // stores slog.Level
 }
+
+// Ensure Logger implements LoggerInterface
+var _ LoggerInterface = (*Logger)(nil)
 
 // NewLogger creates a new logger instance
 func NewLogger(cfg *config.LoggingConfig) (*Logger, error) {

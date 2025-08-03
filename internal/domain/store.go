@@ -8,6 +8,9 @@ type Store interface {
 	// Get retrieves a value by key
 	Get(key string) (value any, err error)
 	
+	// GetTyped retrieves a value by key and unmarshals it into the provided type
+	GetTyped(key string, value any) error
+	
 	// List retrieves all values with keys that start with the given prefix
 	List(keyPrefix string) (values []any, err error)
 	
