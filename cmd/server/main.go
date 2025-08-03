@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,11 +36,13 @@ func main() {
 	}
 
 	// Initialize storage
-	store := infrastructure.NewMemoryStore()
+	baseStore := infrastructure.NewMemoryStore()
+	metrics := infrastructure.NewMetricsCollector()
+	store := infrastructure.NewMetricsStore(baseStore, metrics)
 
 	// Initialize services
-	postService := application.NewPostService(store)
-	debugService := application.NewDebugService(logger, store)
+	postService := application.NewPostService(store, metrics)
+	debugService := application.NewDebugService(logger, store, metrics)
 
 	// Initialize middleware
 	requestIDMiddleware := middleware.NewRequestIDMiddleware()
@@ -47,6 +50,7 @@ func main() {
 	recoveryMiddleware := middleware.NewRecoveryMiddleware(logger)
 	corsMiddleware := middleware.NewCORSMiddleware(&cfg.CORS)
 	errorHandlerMiddleware := middleware.NewErrorHandlerMiddleware(logger)
+	metricsMiddleware := middleware.NewMetricsMiddleware(metrics)
 
 	// Initialize handlers
 	handlers := api.NewHandlers(postService, debugService, errorHandlerMiddleware)
@@ -59,6 +63,7 @@ func main() {
 	r.Use(requestIDMiddleware.Handler)
 	r.Use(loggingMiddleware.Handler)
 	r.Use(corsMiddleware.Handler)
+	r.Use(metricsMiddleware.Handler)
 
 	// Add Chi middleware
 	r.Use(chimiddleware.RealIP)
@@ -70,7 +75,22 @@ func main() {
 	r.Route("/debug", func(r chi.Router) {
 		r.Get("/metrics", handlers.GetMetrics)
 		r.Post("/logs", handlers.SetLogLevel)
-		r.Get("/pprof/*", handlers.GetPprofProfile)
+		
+		// Pprof routes
+		r.Route("/pprof", func(r chi.Router) {
+			r.Get("/", pprof.Index)
+			r.Get("/cmdline", pprof.Cmdline)
+			r.Get("/profile", pprof.Profile)
+			r.Post("/symbol", pprof.Symbol)
+			r.Get("/symbol", pprof.Symbol)
+			r.Get("/trace", pprof.Trace)
+			r.Get("/allocs", pprof.Handler("allocs").ServeHTTP)
+			r.Get("/block", pprof.Handler("block").ServeHTTP)
+			r.Get("/goroutine", pprof.Handler("goroutine").ServeHTTP)
+			r.Get("/heap", pprof.Handler("heap").ServeHTTP)
+			r.Get("/mutex", pprof.Handler("mutex").ServeHTTP)
+			r.Get("/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
+		})
 	})
 
 	r.Route("/posts", func(r chi.Router) {
