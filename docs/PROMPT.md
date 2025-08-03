@@ -85,4 +85,7 @@ The boilerplate development proceeds in the following order:
 
 # FYI.
 
-Init project with `go mod init gosuda.org/boilerplate`.
+1. Init project with `go mod init gosuda.org/boilerplate`.
+2. Before `go test`, run `go mod tidy` and `go fmt ./...` for correcting the code automatically.
+3. When using `go test`, always explicitly set timeout for preventing the test from hanging.
+4. Use `go build` for type checking.
