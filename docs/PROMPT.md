@@ -85,4 +85,4 @@ The boilerplate development proceeds in the following order:
 
 # FYI.
 
-You will receive workspace directory initialized with `go mod init gosuda.org/boilerplate`.
+Init project with `go mod init gosuda.org/boilerplate`.
