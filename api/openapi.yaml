@@ -1,0 +1,290 @@
+openapi: "3.0.0"
+info:
+  title: Blog API Server
+  version: 1.0.0
+  description: A fully-functional blog API server with debug capabilities
+paths:
+  /debug/metrics:
+    get:
+      summary: Get Prometheus metrics
+      description: Returns metrics in Prometheus format for scraping
+      responses:
+        '200':
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+  /debug/logs:
+    post:
+      summary: Adjust log level at runtime
+      description: Changes the application log level without restart
+      parameters:
+        - name: level
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [debug, info, warn, error]
+      responses:
+        '200':
+          description: Log level changed successfully
+        '400':
+          description: Invalid log level
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /debug/pprof/{profile}:
+    get:
+      summary: Get pprof profile
+      description: Returns Go pprof profiling data
+      parameters:
+        - name: profile
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [allocs, block, cmdline, goroutine, heap, mutex, profile, threadcreate, trace]
+      responses:
+        '200':
+          description: Pprof profile data
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /posts:
+    get:
+      summary: List posts with pagination
+      description: Returns a paginated list of blog posts
+      parameters:
+        - name: cursor
+          in: query
+          description: Cursor for pagination
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of posts to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostList'
+    post:
+      summary: Create a new blog post
+      description: Creates a new blog post with the provided data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+      responses:
+        '201':
+          description: Post created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Invalid post data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /posts/{id}:
+    get:
+      summary: Get a specific post
+      description: Returns the blog post with the specified ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9-]+$'
+      responses:
+        '200':
+          description: Post found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update a blog post
+      description: Updates the blog post with the specified ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9-]+$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePostRequest'
+      responses:
+        '200':
+          description: Post updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          description: Invalid post data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete a blog post
+      description: Deletes the blog post with the specified ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Post ID
+          schema:
+            type: string
+            pattern: '^[a-zA-Z0-9-]+$'
+      responses:
+        '204':
+          description: Post deleted successfully
+        '404':
+          description: Post not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Post:
+      type: object
+      required:
+        - id
+        - title
+        - content
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique post identifier
+          example: "post-123"
+        title:
+          type: string
+          description: Post title
+          minLength: 1
+          maxLength: 200
+          example: "My First Blog Post"
+        content:
+          type: string
+          description: Post content
+          minLength: 1
+          maxLength: 10000
+          example: "This is the content of my first blog post..."
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-01T12:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2024-01-01T12:00:00Z"
+    CreatePostRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          description: Post title
+          minLength: 1
+          maxLength: 200
+          example: "My First Blog Post"
+        content:
+          type: string
+          description: Post content
+          minLength: 1
+          maxLength: 10000
+          example: "This is the content of my first blog post..."
+    UpdatePostRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          description: Post title
+          minLength: 1
+          maxLength: 200
+          example: "Updated Blog Post Title"
+        content:
+          type: string
+          description: Post content
+          minLength: 1
+          maxLength: 10000
+          example: "This is the updated content of my blog post..."
+    PostList:
+      type: object
+      required:
+        - posts
+      properties:
+        posts:
+          type: array
+          description: List of posts
+          items:
+            $ref: '#/components/schemas/Post'
+        nextCursor:
+          type: string
+          description: Cursor for next page
+          example: "post-456"
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: "POST_NOT_FOUND"
+        message:
+          type: string
+          description: Error message
+          example: "Post with ID 'post-123' not found"
+        requestId:
+          type: string
+          description: Request ID for tracing
+          example: "550e8400-e29b-41d4-a716-446655440000"
